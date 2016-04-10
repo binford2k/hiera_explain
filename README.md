@@ -171,10 +171,10 @@ hash of Hiera data, given a path.
 ```ruby
 class HieraExplain::Datasource
 
-  # marshall is a data serialization format for Ruby. There does not exist
+  # marshal is a data serialization format for Ruby. There does not exist
   # a Hiera backend for using it, nor should there be as it's a binary format.
   # But if there were, this would make hiera_explain understand it.
-  def self.marshall(path)
+  def self.marshal(path)
     Marshal::load(File.read(path))
   end
 
@@ -185,15 +185,15 @@ The filename and the method it provides *must* be the same as the name for your
 backend.
 
 ```
-root@master:modules # $ tree marshall
-marshall
+root@master:modules # $ tree marshal
+marshal
 └── lib
     ├── hiera
     │   └── backends
-    │       └── marshall_backend.rb
+    │       └── marshal_backend.rb
     └── hiera_explain
         └── datasource
-            └── marshall.rb
+            └── marshal.rb
 ```
 
 ## Disclaimer
