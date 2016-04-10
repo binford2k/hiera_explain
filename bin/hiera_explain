@@ -1,0 +1,153 @@
+#! /opt/puppetlabs/puppet/bin/ruby
+require 'hiera'
+require 'puppet'
+require 'colorize'
+require 'optparse'
+
+require 'hiera_explain'
+require 'hiera_explain/scope'
+require 'hiera_explain/datasource'
+
+begin
+  Puppet.initialize_settings
+rescue => e
+  Puppet.settings.parse
+end
+
+hiera = Hiera.new(:config => Puppet.settings[:hiera_config])
+scope = HieraExplain::Scope.new()
+optparse = OptionParser.new { |opts|
+    opts.banner = "Usage : hiera_explain [--json PATH] [--yaml PATH] [--mcollective IDENTITY] [--puppetdb IDENTITY].
+
+"
+
+    opts.on("-j PATH", "--json PATH", "Load scope from a JSON file.") do |arg|
+      scope.load_scope(arg, :json)
+    end
+
+    opts.on("-y PATH", "--yaml PATH", "Load scope from a YAML file.") do |arg|
+      scope.load_scope(arg, :yaml)
+    end
+
+    opts.on("-m IDENTITY", "--mcollective IDENTITY", "Use MCollective to retrieve scope for an identity.") do |arg|
+      scope.load_scope(arg, :mcollective)
+    end
+
+    opts.on("-p IDENTITY", "--puppetdb IDENTITY", "Use PuppetDB to retrieve scope for an identity.") do |arg|
+      scope.load_scope(arg, :puppetdb)
+    end
+
+    opts.on("-i IDENTITY", "--inventory IDENTITY", "Use Puppet's inventory service to retrieve scope #{'(deprecated!)'.yellow}") do |arg|
+      if Gem::Version.new(Puppet.version) > Gem::Version.new('4')
+        puts "WARNING: Many great apologies, but I fear that the inventory service has been deprecated.".red
+        exit 1
+      end
+      scope.load_scope(arg, :inventory_service)
+    end
+
+    opts.on("-n", "--no-color", "Disable console colors.") do
+      String.disable_colorization = true
+    end
+
+    opts.on("-d", "--debug", "Display debugging messages") do
+        loglevel = Logger::DEBUG
+    end
+
+    opts.separator('')
+
+    opts.on("-h", "--help", "Displays this help") do
+        puts
+        puts opts
+        puts
+        exit
+    end
+}
+optparse.parse!
+
+# Default to the curren't node's MCO's fact cache
+scope.load_scope("/etc/puppetlabs/mcollective/facts.yaml", :yaml) if scope.empty?
+scope['environment'] ||= 'production'
+
+# data buckets
+priority_lookup = {}
+array_lookup    = {}
+hash_lookup     = {}
+hash_errors     = {}
+
+# Cribbed from Hiera source to ensure we're parsing the same way.
+unless ARGV.empty?
+  ARGV.each do |arg|
+    if arg =~ /^(.+?)=(.+?)$/
+      scope[$1] = $2
+    else
+      STDERR.puts "Don't know how to parse scope argument: #{arg}"
+    end
+  end
+end
+
+puts 'Backend data directories:'
+Hiera::Config[:backends].each do |backend|
+  puts "  * #{backend}: #{Hiera::Backend.datadir(backend, scope)}"
+end
+puts
+
+puts 'Expanded hierarchy:'
+Hiera::Backend.datasources(scope) do |datasource|
+  puts "  * #{datasource}"
+end
+puts
+
+puts 'File lookup order:'
+Hiera::Config[:backends].each do |backend|
+  datadir = Hiera::Backend.datadir(backend, scope)
+  next unless datadir
+
+  Hiera::Backend.datasources(scope) do |source|
+    path = File.join(datadir, "#{source}.#{backend}")
+
+    unless File.exists?(path)
+      puts "  [ ] #{path}".red
+
+    else
+      puts "  [X] #{path}".green
+
+      data = HieraExplain.load_datasource(backend, path)
+      priority_lookup = data.merge(priority_lookup)
+
+      data.each do |key, value|
+        array_lookup[key] ||= Array.new
+        array_lookup[key] << value
+
+        hash_lookup[key] ||= Hash.new
+        if (value.class == Hash)
+          hash_lookup[key].merge!(value)
+        else
+          hash_errors[key] ||= Array.new
+          hash_errors[key]  << "#{source}.#{backend}"
+        end
+      end
+
+    end
+
+  end
+end
+puts
+
+puts 'Priority lookup results:'
+priority_lookup.each { |key, value| puts "   * hiera('#{key}') => #{value.to_s.green}" }
+puts
+
+puts 'Array lookup results:'
+array_lookup.each { |key, value| puts "   * hiera_array('#{key}') => #{value.inspect.green}" }
+puts
+
+puts 'Hash lookup results:'
+hash_lookup.each do |key, value|
+  print "   * hiera_hash('#{key}') => "
+  if(hash_errors.has_key? key)
+    puts "No hash datatype in #{hash_errors[key].inspect}".red
+  else
+    puts value.inspect.green
+  end
+end
+puts
