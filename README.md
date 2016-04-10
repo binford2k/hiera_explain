@@ -9,6 +9,8 @@ it will use whatever scope you provide to evaluate the `hiera.yaml` file and
 print it out exactly as Hiera will interpret it. What is scope? That's merely
 the collection of facts or other variables provided for Hiera to use.
 
+![Screenshot](screenshot.png)
+
 ## Usage
 
 The examples here will use this sample `hiera.yaml` configuration file:
@@ -114,8 +116,6 @@ Hash lookup results:
    * hiera_hash('foo') => No hash datatype in ["overrides.json"]
    * hiera_hash('hashies') => {"key"=>"value"}
 ```
-
-![Screenshot](screenshot.png)
 
 ### Options
 
