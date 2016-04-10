@@ -87,6 +87,12 @@ end
 
 puts 'Backend data directories:'
 Hiera::Config[:backends].each do |backend|
+  # make sure we've got any third-party datasources loaded up
+  begin
+    require "hiera_explain/datasource/#{backend}"
+  rescue LoadError => e
+  end
+
   puts "  * #{backend}: #{Hiera::Backend.datadir(backend, scope)}"
 end
 puts
