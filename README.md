@@ -109,11 +109,11 @@ Array lookup results:
    * hiera_array('hashies') => [{"key"=>"value"}]
 
 Hash lookup results:
-   * hiera_hash('pe_repo::base_path') => No hash datatype in ["master.puppetlabs.vm.yaml", "classroom.yaml"]
-   * hiera_hash('puppet_enterprise::profile::console::rbac_session_timeout') => No hash datatype in ["classroom.yaml"]
-   * hiera_hash('puppet_enterprise::profile::puppetdb::listen_address') => No hash datatype in ["classroom.yaml"]
-   * hiera_hash('message') => No hash datatype in ["defaults.yaml", "overrides.json"]
-   * hiera_hash('foo') => No hash datatype in ["overrides.json"]
+   * hiera_hash('pe_repo::base_path') => Not a hash datatype in ["master.puppetlabs.vm.yaml", "classroom.yaml"]
+   * hiera_hash('puppet_enterprise::profile::console::rbac_session_timeout') => Not a hash datatype in ["classroom.yaml"]
+   * hiera_hash('puppet_enterprise::profile::puppetdb::listen_address') => Not a hash datatype in ["classroom.yaml"]
+   * hiera_hash('message') => Not a hash datatype in ["defaults.yaml", "overrides.json"]
+   * hiera_hash('foo') => Not a hash datatype in ["overrides.json"]
    * hiera_hash('hashies') => {"key"=>"value"}
 ```
 
@@ -130,6 +130,7 @@ Usage : hiera_explain [--json PATH] [--yaml PATH] [--mcollective IDENTITY] [--pu
 
     -c, --config CONFIG              Load Hiera settings from an alternate hiera.yaml.
     -f, --filter FILTER              Only keys matching this string or regex will be displayed.
+    -v, --verbose                    Show verbose datasource details.
     -j, --json PATH                  Load scope from a JSON file.
     -y, --yaml PATH                  Load scope from a YAML file.
     -m, --mcollective IDENTITY       Use MCollective to retrieve scope for an identity.
@@ -140,6 +141,8 @@ Usage : hiera_explain [--json PATH] [--yaml PATH] [--mcollective IDENTITY] [--pu
 
     -h, --help                       Displays this help
 ```
+
+#### Overriding facts
 
 You can even override facts one at a time on the command line.
 
@@ -161,6 +164,8 @@ Expanded hierarchy:
   * defaults
 ```
 
+#### Filtering output
+
 If you have many keys set and the output is too long, you can pass in a filter
 using either a full string or a regular expression. For example:
 
@@ -174,7 +179,7 @@ Array lookup results:
    * hiera_array('message') => ["This message is customized for the master.", "This is a sample variable that came from a Hiera datasource"]
 
 Hash lookup results:
-   * hiera_hash('message') => No hash datatype in ["master.puppetlabs.vm.yaml", "defaults.yaml"]
+   * hiera_hash('message') => Not a hash datatype in ["master.puppetlabs.vm.yaml", "defaults.yaml"]
 
 root@master:~ # hiera_explain -f /^puppet_enterprise/
 [...]
@@ -187,8 +192,36 @@ Array lookup results:
    * hiera_array('puppet_enterprise::profile::puppetdb::listen_address') => ["0.0.0.0"]
 
 Hash lookup results:
-   * hiera_hash('puppet_enterprise::profile::console::rbac_session_timeout') => No hash datatype in ["classroom.yaml"]
-   * hiera_hash('puppet_enterprise::profile::puppetdb::listen_address') => No hash datatype in ["classroom.yaml"]
+   * hiera_hash('puppet_enterprise::profile::console::rbac_session_timeout') => Not a hash datatype in ["classroom.yaml"]
+   * hiera_hash('puppet_enterprise::profile::puppetdb::listen_address') => Not a hash datatype in ["classroom.yaml"]
+```
+
+#### Displaying sources for results
+
+To see which datasource(s) resolved any given variable returned, you can pass the
+`--verbose` flag. This might generate a very long printout, so you might want to
+couple it with the `--filter` flag as well.
+
+```
+root@master:~ # hiera_explain -v -f /message/
+[...]
+Priority lookup results:
+   * hiera('message') => This message is customized for the master.
+      - /etc/puppetlabs/code/hieradata/master.puppetlabs.vm.yaml
+   * hiera('hashmessage') => {"key"=>"A message embedded in a hash"}
+      - /etc/puppetlabs/code/hieradata/defaults.yaml
+
+Array lookup results:
+   * hiera_array('message') => ["This message is customized for the master.", "This is a sample variable t4hat came from a Hiera datasource"]
+      - /etc/puppetlabs/code/hieradata/master.puppetlabs.vm.yaml
+      - /etc/puppetlabs/code/hieradata/defaults.yaml
+   * hiera_array('hashmessage') => [{"key"=>"A message embedded in a hash"}]
+      - /etc/puppetlabs/code/hieradata/defaults.yaml
+
+Hash lookup results:
+   * hiera_hash('message') => Not a hash datatype in ["master.puppetlabs.vm.yaml", "defaults.yaml"]
+   * hiera_hash('hashmessage') => {"key"=>"A message embedded in a hash"}
+      - /etc/puppetlabs/code/hieradata/defaults.yaml
 ```
 
 ### Adding supported backends.

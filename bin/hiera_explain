@@ -14,9 +14,10 @@ rescue => e
   Puppet.settings.parse
 end
 
-config = Puppet.settings[:hiera_config]
-scope  = HieraExplain::Scope.new()
-filter = nil
+config  = Puppet.settings[:hiera_config]
+scope   = HieraExplain::Scope.new()
+filter  = nil
+verbose = false
 
 optparse = OptionParser.new { |opts|
     opts.banner = "Usage : hiera_explain [--json PATH] [--yaml PATH] [--mcollective IDENTITY] [--puppetdb IDENTITY].
@@ -33,6 +34,10 @@ optparse = OptionParser.new { |opts|
       else
         filter = arg
       end
+    end
+
+    opts.on("-v", "--verbose", "Show verbose datasource details.") do
+      verbose = true
     end
 
     opts.on("-j PATH", "--json PATH", "Load scope from a JSON file.") do |arg|
@@ -83,10 +88,15 @@ scope.load_scope("/etc/puppetlabs/mcollective/facts.yaml", :yaml) if scope.empty
 scope['environment'] ||= 'production'
 
 # data buckets
-priority_lookup = {}
-array_lookup    = {}
-hash_lookup     = {}
-hash_errors     = {}
+priority_lookup  = {}
+priority_sources = {}
+
+array_lookup     = {}
+array_sources    = {}
+
+hash_lookup      = {}
+hash_sources     = {}
+hash_errors      = {}
 
 # Cribbed from Hiera source to ensure we're parsing the same way.
 unless ARGV.empty?
@@ -138,12 +148,19 @@ Hiera::Config[:backends].each do |backend|
       priority_lookup = data.merge(priority_lookup)
 
       data.each do |key, value|
+        priority_sources[key] ||= path
+        array_sources[key]    ||= Array.new
+        hash_sources[key]     ||= Array.new
+
+
         array_lookup[key] ||= Array.new
-        array_lookup[key] << value
+        array_lookup[key]  << value
+        array_sources[key] << path
 
         hash_lookup[key] ||= Hash.new
         if (value.class == Hash)
           hash_lookup[key].merge!(value)
+          hash_sources[key]  << path
         else
           hash_errors[key] ||= Array.new
           hash_errors[key]  << "#{source}.#{backend}"
@@ -160,6 +177,7 @@ puts 'Priority lookup results:'
 priority_lookup.each do |key, value|
   next unless HieraExplain.match(key, filter)
   puts "   * hiera('#{key}') => #{value.to_s.green}"
+  puts "      - #{priority_sources[key].cyan}" if verbose
 end
 puts
 
@@ -167,6 +185,7 @@ puts 'Array lookup results:'
 array_lookup.each do |key, value|
   next unless HieraExplain.match(key, filter)
   puts "   * hiera_array('#{key}') => #{value.inspect.green}"
+  array_sources[key].each { |source| puts "      - #{source.cyan}"} if verbose
 end
 puts
 
@@ -176,9 +195,10 @@ hash_lookup.each do |key, value|
 
   print "   * hiera_hash('#{key}') => "
   if(hash_errors.has_key? key)
-    puts "No hash datatype in #{hash_errors[key].inspect}".red
+    puts "Not a hash datatype in #{hash_errors[key].inspect}".red
   else
     puts value.inspect.green
   end
+  hash_sources[key].each { |source| puts "      - #{source.cyan}"} if verbose
 end
 puts
