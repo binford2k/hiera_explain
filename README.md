@@ -1,5 +1,21 @@
 # Hiera Explain
 
+<div style="float: left; background-color: #f5f5f5; border-radius: 3px; border: 1px solid #d8d8d8; margin-right: 1em; padding: 0.5em;">
+  <ul>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#options">Options</a>
+      <ul>
+        <li><a href="#overriding-facts">Overriding facts</a></li>
+        <li><a href="#filtering-output">Filtering output</a></li>
+        <li><a href="#displaying-sources-for-results">Displaying sources for results</a></li>
+      </ul>
+    </li>
+    <li><a href="#adding-supported-backends">Adding supported backends</a></li>
+    <li><a href="#disclaimer">Disclaimer</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</div>
+
 Hiera is sometimes inscrutable. Its data retrieval model can be surprising in
 its simplicity. It's common for people to struggle with how to format data in
 their Hiera datasources and retrieve it properly.
