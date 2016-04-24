@@ -1,21 +1,5 @@
 # Hiera Explain
 
-<div style="float: left; background-color: #f5f5f5; border-radius: 3px; border: 1px solid #d8d8d8; margin-right: 1em; padding: 0.5em;">
-  <ul>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#options">Options</a>
-      <ul>
-        <li><a href="#overriding-facts">Overriding facts</a></li>
-        <li><a href="#filtering-output">Filtering output</a></li>
-        <li><a href="#displaying-sources-for-results">Displaying sources for results</a></li>
-      </ul>
-    </li>
-    <li><a href="#adding-supported-backends">Adding supported backends</a></li>
-    <li><a href="#disclaimer">Disclaimer</a></li>
-    <li><a href="#contact">Contact</a></li>
-  </ul>
-</div>
-
 Hiera is sometimes inscrutable. Its data retrieval model can be surprising in
 its simplicity. It's common for people to struggle with how to format data in
 their Hiera datasources and retrieve it properly.
@@ -24,6 +8,15 @@ This tool is designed to help demystify Hiera. When you invoke `hiera_explain`,
 it will use whatever scope you provide to evaluate the `hiera.yaml` file and
 print it out exactly as Hiera will interpret it. What is scope? That's merely
 the collection of facts or other variables provided for Hiera to use.
+
+* [Usage](#usage)
+* [Options](#options)
+    * [Overriding facts](#overriding-facts)
+    * [Filtering output](#filtering-output)
+    * [Displaying sources for results](#displaying-sources-for-results)
+* [Adding supported backends](#adding-supported-backends)
+* [Disclaimer](#disclaimer)
+* [Contact](#contact)
 
 ![Screenshot](screenshot.png)
 
