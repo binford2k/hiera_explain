@@ -128,6 +128,8 @@ root@master:~ # hiera_explain -h
 
 Usage : hiera_explain [--json PATH] [--yaml PATH] [--mcollective IDENTITY] [--puppetdb IDENTITY].
 
+    -c, --config CONFIG              Load Hiera settings from an alternate hiera.yaml.
+    -f, --filter FILTER              Only keys matching this string or regex will be displayed.
     -j, --json PATH                  Load scope from a JSON file.
     -y, --yaml PATH                  Load scope from a YAML file.
     -m, --mcollective IDENTITY       Use MCollective to retrieve scope for an identity.
@@ -157,6 +159,36 @@ Expanded hierarchy:
   * tuning
   * common
   * defaults
+```
+
+If you have many keys set and the output is too long, you can pass in a filter
+using either a full string or a regular expression. For example:
+
+```
+root@master:~ # hiera_explain -f message
+[...]
+Priority lookup results:
+   * hiera('message') => This message is customized for the master.
+
+Array lookup results:
+   * hiera_array('message') => ["This message is customized for the master.", "This is a sample variable that came from a Hiera datasource"]
+
+Hash lookup results:
+   * hiera_hash('message') => No hash datatype in ["master.puppetlabs.vm.yaml", "defaults.yaml"]
+
+root@master:~ # hiera_explain -f /^puppet_enterprise/
+[...]
+Priority lookup results:
+   * hiera('puppet_enterprise::profile::console::rbac_session_timeout') => 4320
+   * hiera('puppet_enterprise::profile::puppetdb::listen_address') => 0.0.0.0
+
+Array lookup results:
+   * hiera_array('puppet_enterprise::profile::console::rbac_session_timeout') => [4320]
+   * hiera_array('puppet_enterprise::profile::puppetdb::listen_address') => ["0.0.0.0"]
+
+Hash lookup results:
+   * hiera_hash('puppet_enterprise::profile::console::rbac_session_timeout') => No hash datatype in ["classroom.yaml"]
+   * hiera_hash('puppet_enterprise::profile::puppetdb::listen_address') => No hash datatype in ["classroom.yaml"]
 ```
 
 ### Adding supported backends.

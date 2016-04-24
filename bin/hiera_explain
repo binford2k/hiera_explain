@@ -16,6 +16,7 @@ end
 
 config = Puppet.settings[:hiera_config]
 scope  = HieraExplain::Scope.new()
+filter = nil
 
 optparse = OptionParser.new { |opts|
     opts.banner = "Usage : hiera_explain [--json PATH] [--yaml PATH] [--mcollective IDENTITY] [--puppetdb IDENTITY].
@@ -24,6 +25,14 @@ optparse = OptionParser.new { |opts|
 
     opts.on("-c CONFIG", "--config CONFIG", "Load Hiera settings from an alternate hiera.yaml.") do |arg|
       config = File.expand_path(arg)
+    end
+
+    opts.on("-f FILTER", "--filter FILTER", "Only keys matching this string or regex will be displayed.") do |arg|
+      if arg[0] == '/' and arg[-1] == '/'
+        filter = Regexp.new(arg[1...-1])
+      else
+        filter = arg
+      end
     end
 
     opts.on("-j PATH", "--json PATH", "Load scope from a JSON file.") do |arg|
@@ -68,7 +77,6 @@ optparse = OptionParser.new { |opts|
     end
 }
 optparse.parse!
-
 
 # Default to the current node's MCO's fact cache
 scope.load_scope("/etc/puppetlabs/mcollective/facts.yaml", :yaml) if scope.empty?
@@ -149,15 +157,23 @@ end
 puts
 
 puts 'Priority lookup results:'
-priority_lookup.each { |key, value| puts "   * hiera('#{key}') => #{value.to_s.green}" }
+priority_lookup.each do |key, value|
+  next unless HieraExplain.match(key, filter)
+  puts "   * hiera('#{key}') => #{value.to_s.green}"
+end
 puts
 
 puts 'Array lookup results:'
-array_lookup.each { |key, value| puts "   * hiera_array('#{key}') => #{value.inspect.green}" }
+array_lookup.each do |key, value|
+  next unless HieraExplain.match(key, filter)
+  puts "   * hiera_array('#{key}') => #{value.inspect.green}"
+end
 puts
 
 puts 'Hash lookup results:'
 hash_lookup.each do |key, value|
+  next unless HieraExplain.match(key, filter)
+
   print "   * hiera_hash('#{key}') => "
   if(hash_errors.has_key? key)
     puts "No hash datatype in #{hash_errors[key].inspect}".red

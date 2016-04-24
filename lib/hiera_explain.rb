@@ -12,4 +12,16 @@ class HieraExplain
 
     data
   end
+
+  def self.match(key, filter)
+    return true if filter.nil?
+
+    case filter
+    when String
+      key == filter
+    when Regexp
+      key =~ filter
+    end
+  end
+
 end
