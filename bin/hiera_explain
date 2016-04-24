@@ -14,12 +14,17 @@ rescue => e
   Puppet.settings.parse
 end
 
-hiera = Hiera.new(:config => Puppet.settings[:hiera_config])
-scope = HieraExplain::Scope.new()
+config = Puppet.settings[:hiera_config]
+scope  = HieraExplain::Scope.new()
+
 optparse = OptionParser.new { |opts|
     opts.banner = "Usage : hiera_explain [--json PATH] [--yaml PATH] [--mcollective IDENTITY] [--puppetdb IDENTITY].
 
 "
+
+    opts.on("-c CONFIG", "--config CONFIG", "Load Hiera settings from an alternate hiera.yaml.") do |arg|
+      config = File.expand_path(arg)
+    end
 
     opts.on("-j PATH", "--json PATH", "Load scope from a JSON file.") do |arg|
       scope.load_scope(arg, :json)
@@ -64,7 +69,8 @@ optparse = OptionParser.new { |opts|
 }
 optparse.parse!
 
-# Default to the curren't node's MCO's fact cache
+
+# Default to the current node's MCO's fact cache
 scope.load_scope("/etc/puppetlabs/mcollective/facts.yaml", :yaml) if scope.empty?
 scope['environment'] ||= 'production'
 
@@ -84,6 +90,9 @@ unless ARGV.empty?
     end
   end
 end
+
+# now that we've got scope, start evaluating it.
+hiera = Hiera.new(:config => config)
 
 puts 'Backend data directories:'
 Hiera::Config[:backends].each do |backend|
