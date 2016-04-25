@@ -273,8 +273,9 @@ marshal
 ## Disclaimer
 
 This is early in development, although the script this is based on has been used
-in the classroom for quite a while now. This currently only supports Hiera
-version 1.x.
+in the classroom for quite a while now. This currently only supports version 1.x.
+of the `hiera.yaml` config file. (It will work with current Hiera, but doesn't
+understand the new data plugins.)
 
 Contact
 -------
