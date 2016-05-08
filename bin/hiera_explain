@@ -48,6 +48,10 @@ optparse = OptionParser.new { |opts|
       scope.load_scope(arg, :yaml)
     end
 
+    opts.on("-C IDENTITY", "--cached IDENTITY", "Use the Puppet Master's cached facts file for an identity.") do |arg|
+      scope.load_scope(arg, :cached)
+    end
+
     opts.on("-m IDENTITY", "--mcollective IDENTITY", "Use MCollective to retrieve scope for an identity.") do |arg|
       scope.load_scope(arg, :mcollective)
     end

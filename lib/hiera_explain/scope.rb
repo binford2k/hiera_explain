@@ -73,8 +73,30 @@ class HieraExplain::Scope
         Puppet::Node::Facts.indirection.terminus_class = :puppetdb
         scope = YAML.load(Puppet::Node::Facts.indirection.find(source).to_yaml)
       rescue Exception => e
-          STDERR.puts "PuppetDB fact lookup failed: #{e.class}: #{e}"
-          exit 1
+        STDERR.puts "PuppetDB fact lookup failed: #{e.class}: #{e}"
+        exit 1
+      end
+
+    when :cached
+      require 'puppet'
+      require 'yaml'
+
+      path = "#{Puppet.settings[:vardir]}/yaml/facts/#{source}.yaml"
+      unless File.exist? path
+        require 'hocon'
+        data = {}
+        # I hate hardcoding this path, but I don't know how to retreive it programatically.
+        Dir['/etc/puppetlabs/puppetserver/conf.d/*'].each do |conf|
+          data.merge! Hocon.load conf
+        end
+        path = "#{data['jruby-puppet']['master-var-dir']}/yaml/facts/#{source}.yaml"
+      end
+
+      begin
+        scope = YAML.load_file(path)
+      rescue Exception => e
+        STDERR.puts "No cached facts file for client #{source}"
+        exit 1
       end
 
     when :inventory_service

@@ -142,6 +142,7 @@ Usage : hiera_explain [--json PATH] [--yaml PATH] [--mcollective IDENTITY] [--pu
     -v, --verbose                    Show verbose datasource details.
     -j, --json PATH                  Load scope from a JSON file.
     -y, --yaml PATH                  Load scope from a YAML file.
+    -C, --cached IDENTITY            Use the Puppet Master's cached facts file for an identity.
     -m, --mcollective IDENTITY       Use MCollective to retrieve scope for an identity.
     -p, --puppetdb IDENTITY          Use PuppetDB to retrieve scope for an identity.
     -i, --inventory IDENTITY         Use Puppet's inventory service to retrieve scope (deprecated!)
