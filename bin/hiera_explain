@@ -139,8 +139,15 @@ Hiera::Config[:backends].each do |backend|
   datadir = Hiera::Backend.datadir(backend, scope)
   next unless datadir
 
+  # backend like eyaml allow for custom file-extensions
+  unless Hiera::Config[backend.to_sym][:extension].nil?
+    extension = Hiera::Config[backend.to_sym][:extension]
+  else
+    extension = backend
+  end
+
   Hiera::Backend.datasources(scope) do |source|
-    path = File.join(datadir, "#{source}.#{backend}")
+    path = File.join(datadir, "#{source}.#{extension}")
 
     unless File.exists?(path)
       puts "  [ ] #{path}".red
@@ -167,7 +174,7 @@ Hiera::Config[:backends].each do |backend|
           hash_sources[key]  << path
         else
           hash_errors[key] ||= Array.new
-          hash_errors[key]  << "#{source}.#{backend}"
+          hash_errors[key]  << "#{source}.#{extension}"
         end
       end
 
